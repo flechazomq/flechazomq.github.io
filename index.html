@@ -21,10 +21,15 @@
   /* ---------- HUD ---------- */
   #hud{position:fixed;inset:0;pointer-events:none;display:none;z-index:5;}
   #hud.on{display:block;}
-  #crosshair{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);}
-  #crosshair::before,#crosshair::after{content:"";position:absolute;background:rgba(232,241,242,.9);box-shadow:0 0 4px rgba(0,0,0,.8);}
-  #crosshair::before{left:50%;top:0;width:2px;height:100%;transform:translateX(-50%);clip-path:polygon(0 0,100% 0,100% 32%,0 32%,0 68%,100% 68%,100% 100%,0 100%);}
-  #crosshair::after{top:50%;left:0;height:2px;width:100%;transform:translateY(-50%);clip-path:polygon(0 0,32% 0,32% 100%,0 100%,68% 0,100% 0,100% 100%,68% 100%);}
+  #crosshair{position:absolute;left:50%;top:50%;width:56px;height:56px;transform:translate(-50%,-50%);pointer-events:none;transition:transform .06s ease-out;}
+  #crosshair svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 3px rgba(0,0,0,.9)) drop-shadow(0 1px 1px rgba(0,0,0,.8));}
+  #crosshair.firing{transform:translate(-50%,-50%) scale(1.14);}
+  /* HUD crosshair button */
+  #chHudBtn{position:absolute;top:10px;left:50%;transform:translateX(-50%);pointer-events:auto;cursor:pointer;background:var(--plate);border:1px solid rgba(157,180,186,.28);color:var(--ink);font-size:12px;font-weight:700;letter-spacing:.12em;padding:7px 12px;display:flex;align-items:center;gap:7px;}
+  #chHudBtn:hover{border-color:var(--amber);color:var(--amber);}
+  #chHudBtn .chHudDot{width:18px;height:18px;flex:none;}
+  #chHudBtn .chHudDot svg{width:100%;height:100%;display:block;}
+  #chHudBtn kbd{font-family:inherit;font-size:10px;border:1px solid rgba(157,180,186,.4);padding:1px 4px;color:var(--dim);}
   #hitmark{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%) rotate(45deg);opacity:0;}
   #hitmark span{position:absolute;background:var(--amber);}
   #hitmark span:nth-child(1){left:0;top:0;width:7px;height:2px;}
@@ -95,7 +100,48 @@
   #finalStats .n{font-size:30px;font-weight:800;color:var(--amber);font-variant-numeric:tabular-nums;}
   #finalStats .l{font-size:10px;letter-spacing:.24em;color:var(--dim);}
   #errBox{position:fixed;left:10px;right:10px;bottom:10px;z-index:99;background:#5c1408;color:#ffd9d2;font-size:12.5px;padding:10px 12px;display:none;white-space:pre-wrap;border:1px solid #ff7a5c;}
-  @media (max-width:560px){ .rules{grid-template-columns:1fr;} .cardInner{padding:20px 18px 16px;} }
+  /* ---------- Crosshair picker ---------- */
+  .ch-picker{border:1px solid rgba(157,180,186,.22);background:rgba(255,255,255,.03);padding:14px 14px 12px;margin:0 0 16px;text-align:left;}
+  .ch-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px;}
+  .ch-head .ch-title{font-size:11px;letter-spacing:.28em;color:var(--amber);font-weight:700;}
+  .ch-head .ch-current{font-size:12px;color:var(--dim);text-align:right;}
+  .ch-head .ch-current b{color:var(--ink);font-weight:700;}
+  .ch-preview{position:relative;height:92px;overflow:hidden;border:1px solid rgba(0,0,0,.55);background:linear-gradient(180deg,#1b2a35 0%,#354550 52%,#59666e 52.2%,#4d585f 100%);margin-bottom:12px;}
+  .ch-preview::before{content:"";position:absolute;inset:52% 0 0;background-image:radial-gradient(rgba(255,255,255,.16) 1px,transparent 1.2px),radial-gradient(rgba(0,0,0,.22) 1px,transparent 1.2px);background-size:18px 18px,13px 13px;background-position:4px 6px,9px 2px;opacity:.7;}
+  .ch-preview::after{content:"";position:absolute;left:0;right:0;top:71%;height:5px;background:#c9a227;opacity:.85;}
+  .ch-preview-cross{position:absolute;left:50%;top:50%;width:64px;height:64px;transform:translate(-50%,-50%);z-index:1;}
+  .ch-preview-cross svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 0 3px rgba(0,0,0,.9));}
+  .ch-preview-label{position:absolute;left:8px;bottom:6px;z-index:1;font-size:10px;letter-spacing:.18em;color:rgba(232,241,242,.75);background:rgba(4,10,15,.55);padding:2px 6px;}
+  .ch-label{font-size:10px;letter-spacing:.22em;color:var(--dim);margin:10px 0 6px;}
+  .ch-label:first-child{margin-top:0;}
+  .ch-styles{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+  .ch-style-btn{appearance:none;cursor:pointer;background:rgba(8,18,24,.72);border:1px solid rgba(157,180,186,.25);color:var(--ink);padding:7px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit;}
+  .ch-style-btn .thumb{width:34px;height:34px;}
+  .ch-style-btn .thumb svg{width:100%;height:100%;display:block;overflow:visible;}
+  .ch-style-btn .sname{font-size:11px;line-height:1;color:var(--dim);}
+  .ch-style-btn:hover{border-color:rgba(255,179,71,.6);}
+  .ch-style-btn.sel{border-color:var(--amber);background:rgba(255,179,71,.12);box-shadow:inset 0 0 0 1px var(--amber);}
+  .ch-style-btn.sel .sname{color:var(--amber);font-weight:700;}
+  .ch-row2{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;}
+  .ch-colors{display:flex;gap:7px;flex-wrap:wrap;}
+  .ch-color-btn{appearance:none;cursor:pointer;width:30px;height:30px;padding:0;border:2px solid rgba(255,255,255,.18);background:transparent;position:relative;font-family:inherit;}
+  .ch-color-btn i{display:block;position:absolute;inset:4px;}
+  .ch-color-btn:hover{border-color:rgba(255,255,255,.55);}
+  .ch-color-btn.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber);}
+  .ch-color-btn.sel::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#08131c;text-shadow:0 0 3px rgba(255,255,255,.9),0 0 3px rgba(255,255,255,.9);}
+  .ch-sizes{display:flex;gap:7px;}
+  .ch-size-btn{flex:1;appearance:none;cursor:pointer;background:rgba(8,18,24,.72);border:1px solid rgba(157,180,186,.25);color:var(--dim);font-family:inherit;font-size:12px;font-weight:700;padding:7px 0;}
+  .ch-size-btn small{display:block;font-size:10px;font-weight:400;margin-top:1px;}
+  .ch-size-btn.sel{border-color:var(--amber);color:var(--amber);background:rgba(255,179,71,.12);box-shadow:inset 0 0 0 1px var(--amber);}
+  .ch-note{font-size:11px;color:var(--dim);line-height:1.55;margin:10px 0 0;}
+  #startCard,#chOverlay{overflow-y:auto;}
+  #startCard .cardInner,#chOverlay .cardInner{margin:auto;flex:none;width:100%;}
+  #chOverlay{display:none;z-index:30;}
+  #chOverlay .cardInner{max-width:520px;}
+  #chOverlay .ch-actions{display:flex;gap:9px;}
+  #chOverlay .ch-actions .bigbtn{flex:1;}
+  #chOverlay .ghostbtn{flex:1;min-height:52px;cursor:pointer;background:transparent;border:1px solid rgba(157,180,186,.35);color:var(--ink);font-size:14px;font-weight:700;letter-spacing:.14em;font-family:inherit;}
+  @media (max-width:560px){ .rules{grid-template-columns:1fr;} .cardInner{padding:20px 18px 16px;} .ch-styles{grid-template-columns:repeat(3,1fr);} .ch-row2{grid-template-columns:1fr;} #chHudBtn{top:64px;} }
   @media (prefers-reduced-motion: reduce){ #hitmark.pop,#dmgVin.flash{animation:none;} }
 </style>
 </head>
@@ -111,6 +157,7 @@
     <div id="wavebox" class="plate"><div class="lab">波次 WAVE</div><div id="waveNum">1</div><div id="leftNum">敌人 0</div></div>
     <div id="scorebox" class="plate"><div class="lab">得分 SCORE</div><div id="scoreNum">0</div><div id="killNum">击破 0</div></div>
   </div>
+  <button id="chHudBtn" type="button" aria-label="更换准星"><span class="chHudDot" id="chHudDot"></span>准星<kbd>C</kbd></button>
   <div id="banner"><div class="big" id="bannerBig">第 1 波</div><div class="sub" id="bannerSub">守住码头</div></div>
   <div id="bottombar">
     <div id="hpbox" class="plate"><div class="lab"><span>生命 HP</span><span id="hpVal">100</span></div><div id="hpTrack"><div id="hpFill"></div></div></div>
@@ -137,9 +184,36 @@
       <li><b>R / 换弹键</b><span>换弹匣 · 空格跳跃</span></li>
       <li><b>爆头 ×2</b><span>打头伤害翻倍</span></li>
       <li><b>击破 +100</b><span>爆头击杀 +150 · 每波回 25 血</span></li>
+      <li><b>C 键</b><span>游戏中随时更换准星</span></li>
     </ul>
+    <div class="ch-picker" data-ch-picker>
+      <div class="ch-head"><span class="ch-title">准星 CROSSHAIR</span><span class="ch-current">当前：<b data-ch-current>经典十字 · 纯白 · 中</b></span></div>
+      <div class="ch-preview"><div class="ch-preview-cross" data-ch-preview></div><span class="ch-preview-label">预览 · 地面瞄准效果</span></div>
+      <div class="ch-label">样式 STYLE</div>
+      <div class="ch-styles" data-ch-styles></div>
+      <div class="ch-row2">
+        <div><div class="ch-label">颜色 COLOR</div><div class="ch-colors" data-ch-colors></div></div>
+        <div><div class="ch-label">大小 SIZE</div><div class="ch-sizes" data-ch-sizes>
+          <button type="button" class="ch-size-btn" data-size="36">小<small>36</small></button>
+          <button type="button" class="ch-size-btn" data-size="48">中<small>48</small></button>
+          <button type="button" class="ch-size-btn" data-size="62">大<small>62</small></button>
+        </div></div>
+      </div>
+      <p class="ch-note">点任意一款立刻换上，预览就是游戏里的样子。进游戏后按 <b>C</b> 或点顶部「准星」也能随时换。</p>
+    </div>
     <button class="bigbtn" id="startBtn">开始战斗</button>
     <p class="fineprint">桌面端点「开始战斗」后移动鼠标转视角；转到头时把鼠标顶住屏幕边缘，视角会继续转，不会卡住 · 建议开声音，枪声是合成的</p>
+  </div>
+</div>
+
+<!-- Crosshair overlay (in-game, pauses the fight) -->
+<div class="card" id="chOverlay">
+  <div class="cardInner">
+    <div class="kicker">已暂停 · 更换准星</div>
+    <h1 style="font-size:30px;">选择准星</h1>
+    <p class="tagline" style="margin-bottom:12px;">样式、颜色、大小都是点一下立刻生效。换完点「继续战斗」回到战场。</p>
+    <div id="chOverlayPickerSlot"></div>
+    <div class="ch-actions"><button class="ghostbtn" id="chResetBtn" type="button">恢复默认</button><button class="bigbtn" id="chCloseBtn" type="button">继续战斗</button></div>
   </div>
 </div>
 
@@ -5231,7 +5305,7 @@ function spawnEnemy(hpMul,speedMul){
 
 /* ================= Game state ================= */
 var S={mode:'menu',hp:100,score:0,kills:0,wave:0,ammo:30,mag:30,reloading:false,reloadT:0,
-  fireCd:0,toSpawn:0,spawnT:0,betweenT:0,shake:0,hitT:0,time:0};
+  fireCd:0,toSpawn:0,spawnT:0,betweenT:0,shake:0,hitT:0,time:0,paused:false};
 var player={x:0,z:16,yaw:0,pitch:0,vy:0,groundY:0,grounded:true,bobPh:0,moving:false};
 var keys={};
 var firing=false;
@@ -5244,6 +5318,115 @@ var hud=$('hud'),hpFill=$('hpFill'),hpVal=$('hpVal'),ammoNum=$('ammoNum'),reload
 var bannerT=null;
 function showBanner(big,sub,ms){ bannerBig.textContent=big; bannerSub.textContent=sub; banner.classList.add('show');
   if(bannerT)clearTimeout(bannerT); bannerT=setTimeout(function(){banner.classList.remove('show');},ms||1900); }
+
+/* ================= Crosshair picker ================= */
+var CH_STYLES=[
+  {id:'classic',name:'经典十字'},
+  {id:'dotcross',name:'点芯十字'},
+  {id:'circle',name:'圆环准星'},
+  {id:'thin',name:'细线十字'},
+  {id:'bold',name:'粗十字'},
+  {id:'dot',name:'仅中心点'}
+];
+var CH_COLORS=[
+  {id:'white',name:'纯白',value:'#eef6f7'},
+  {id:'green',name:'荧光绿',value:'#3dff7a'},
+  {id:'amber',name:'琥珀橙',value:'#ffb347'},
+  {id:'cyan',name:'青蓝',value:'#37e0c8'},
+  {id:'red',name:'警戒红',value:'#ff4d3d'},
+  {id:'pink',name:'亮粉',value:'#ff5da2'}
+];
+var chState={style:'classic',color:'#eef6f7',colorName:'纯白',size:48,sizeName:'中'};
+function chSVG(style,color){
+  function line(x1,y1,x2,y2,w){ return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+'" stroke-width="'+w+'" stroke-linecap="square"/>'; }
+  var s='';
+  if(style==='dotcross'){ s=line(32,6,32,23,2.6)+line(32,41,32,58,2.6)+line(6,32,23,32,2.6)+line(41,32,58,32,2.6)+'<circle cx="32" cy="32" r="2.6" fill="'+color+'"/>'; }
+  else if(style==='circle'){ s='<circle cx="32" cy="32" r="14" fill="none" stroke="'+color+'" stroke-width="2.4"/><circle cx="32" cy="32" r="2.4" fill="'+color+'"/>'+line(32,4,32,10,2.2)+line(32,54,32,60,2.2)+line(4,32,10,32,2.2)+line(54,32,60,32,2.2); }
+  else if(style==='thin'){ s=line(32,4,32,27,1.3)+line(32,37,32,60,1.3)+line(4,32,27,32,1.3)+line(37,32,60,32,1.3); }
+  else if(style==='bold'){ s=line(32,10,32,23,5)+line(32,41,32,54,5)+line(10,32,23,32,5)+line(41,32,54,32,5); }
+  else if(style==='dot'){ s='<circle cx="32" cy="32" r="3.2" fill="'+color+'"/><circle cx="32" cy="32" r="7.5" fill="none" stroke="'+color+'" stroke-width="1.2" opacity="0.65"/>'; }
+  else { s=line(32,8,32,24,2.6)+line(32,40,32,56,2.6)+line(8,32,24,32,2.6)+line(40,32,56,32,2.6); }
+  return '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+s+'</svg>';
+}
+function chStyleName(){ for(var i=0;i<CH_STYLES.length;i++){ if(CH_STYLES[i].id===chState.style) return CH_STYLES[i].name; } return '经典十字'; }
+function renderCrosshair(){
+  var el=$('crosshair');
+  if(el){ el.innerHTML=chSVG(chState.style,chState.color); el.style.width=chState.size+'px'; el.style.height=chState.size+'px'; }
+  var hd=$('chHudDot'); if(hd) hd.innerHTML=chSVG(chState.style,chState.color);
+  var spans=document.querySelectorAll('#hitmark span');
+  for(var i=0;i<spans.length;i++){ spans[i].style.background=chState.color; }
+  var pickers=document.querySelectorAll('[data-ch-picker]');
+  for(var p=0;p<pickers.length;p++){
+    var pk=pickers[p];
+    var prev=pk.querySelector('[data-ch-preview]');
+    if(prev){ prev.innerHTML=chSVG(chState.style,chState.color); prev.style.width=chState.size+'px'; prev.style.height=chState.size+'px'; }
+    var cur=pk.querySelector('[data-ch-current]');
+    if(cur) cur.textContent=chStyleName()+' · '+chState.colorName+' · '+chState.sizeName;
+    var sbtns=pk.querySelectorAll('[data-ch-style]');
+    for(var a=0;a<sbtns.length;a++){ sbtns[a].classList.toggle('sel',sbtns[a].getAttribute('data-ch-style')===chState.style); }
+    var cbtns=pk.querySelectorAll('[data-ch-color]');
+    for(var b=0;b<cbtns.length;b++){ cbtns[b].classList.toggle('sel',cbtns[b].getAttribute('data-ch-color')===chState.color); }
+    var zbtns=pk.querySelectorAll('[data-size]');
+    for(var c=0;c<zbtns.length;c++){ zbtns[c].classList.toggle('sel',parseInt(zbtns[c].getAttribute('data-size'),10)===chState.size); }
+  }
+}
+function initPicker(pk){
+  if(!pk||pk.getAttribute('data-ch-init')==='1') return;
+  pk.setAttribute('data-ch-init','1');
+  var stylesBox=pk.querySelector('[data-ch-styles]');
+  if(stylesBox){
+    stylesBox.innerHTML='';
+    CH_STYLES.forEach(function(st){
+      var btn=document.createElement('button');
+      btn.type='button'; btn.className='ch-style-btn'; btn.setAttribute('data-ch-style',st.id);
+      btn.setAttribute('aria-label','准星样式：'+st.name);
+      btn.innerHTML='<span class="thumb">'+chSVG(st.id,chState.color)+'</span><span class="sname">'+st.name+'</span>';
+      btn.addEventListener('click',function(){ chState.style=st.id; renderCrosshair(); refreshPickerThumbs(); });
+      stylesBox.appendChild(btn);
+    });
+  }
+  var colorsBox=pk.querySelector('[data-ch-colors]');
+  if(colorsBox){
+    colorsBox.innerHTML='';
+    CH_COLORS.forEach(function(co){
+      var btn=document.createElement('button');
+      btn.type='button'; btn.className='ch-color-btn'; btn.setAttribute('data-ch-color',co.value);
+      btn.setAttribute('aria-label','准星颜色：'+co.name); btn.title=co.name;
+      btn.innerHTML='<i style="background:'+co.value+'"></i>';
+      btn.addEventListener('click',function(){ chState.color=co.value; chState.colorName=co.name; renderCrosshair(); refreshPickerThumbs(); });
+      colorsBox.appendChild(btn);
+    });
+  }
+  var sizeBtns=pk.querySelectorAll('[data-size]');
+  for(var i=0;i<sizeBtns.length;i++){
+    (function(btn){
+      btn.addEventListener('click',function(){
+        chState.size=parseInt(btn.getAttribute('data-size'),10);
+        chState.sizeName=btn.textContent.trim().charAt(0);
+        renderCrosshair();
+      });
+    })(sizeBtns[i]);
+  }
+}
+function refreshPickerThumbs(){
+  var thumbs=document.querySelectorAll('[data-ch-picker] [data-ch-style] .thumb');
+  var btns=document.querySelectorAll('[data-ch-picker] [data-ch-style]');
+  for(var i=0;i<btns.length;i++){ var th=btns[i].querySelector('.thumb'); if(th) th.innerHTML=chSVG(btns[i].getAttribute('data-ch-style'),chState.color); }
+}
+function openChPanel(){
+  if(S.mode!=='play'||S.paused) return;
+  S.paused=true; firing=false;
+  var ov=$('chOverlay'); if(ov) ov.style.display='flex';
+  document.body.classList.remove('playing-on');
+  if(document.exitPointerLock) document.exitPointerLock();
+}
+function closeChPanel(){
+  var ov=$('chOverlay'); if(ov) ov.style.display='none';
+  if(S.mode!=='play'){ S.paused=false; return; }
+  S.paused=false;
+  document.body.classList.add('playing-on');
+  if(!isTouch) lockPointer();
+}
 function updateHUD(){
   hpVal.textContent=Math.max(0,Math.ceil(S.hp));
   hpFill.style.width=Math.max(0,S.hp)+'%'; hpFill.className=S.hp<=30?'low':'';
@@ -5269,7 +5452,8 @@ function resetGame(){
   startWave(1); updateHUD();
 }
 function gameOver(){
-  S.mode='over';
+  S.mode='over'; S.paused=false;
+  var ov0=$('chOverlay'); if(ov0) ov0.style.display='none';
   $('fScore').textContent=S.score; $('fKills').textContent=S.kills; $('fWave').textContent=S.wave;
   $('overCard').style.display='flex'; hud.classList.remove('on');
   document.body.classList.remove('playing-on');
@@ -5277,7 +5461,8 @@ function gameOver(){
   if(document.exitPointerLock) document.exitPointerLock();
 }
 function startGame(){
-  audio(); resetGame(); S.mode='play';
+  audio(); resetGame(); S.mode='play'; S.paused=false;
+  var ov1=$('chOverlay'); if(ov1) ov1.style.display='none';
   $('startCard').style.display='none'; $('overCard').style.display='none';
   hud.classList.add('on'); $('touchUI').classList.add('playing');
   document.body.classList.add('playing-on');
@@ -5285,6 +5470,18 @@ function startGame(){
 }
 $('startBtn').addEventListener('click',startGame);
 $('againBtn').addEventListener('click',startGame);
+/* crosshair picker wiring: start-card picker is the source, overlay gets a clone */
+(function(){
+  var src=document.querySelector('[data-ch-picker]');
+  if(src) initPicker(src);
+  var slot=$('chOverlayPickerSlot');
+  if(src&&slot){ var clone=src.cloneNode(true); clone.removeAttribute('data-ch-init'); slot.appendChild(clone); initPicker(clone); }
+  renderCrosshair();
+  var hudBtn=$('chHudBtn'); if(hudBtn) hudBtn.addEventListener('click',function(e){ e.stopPropagation(); openChPanel(); });
+  var closeBtn=$('chCloseBtn'); if(closeBtn) closeBtn.addEventListener('click',closeChPanel);
+  var resetBtn=$('chResetBtn'); if(resetBtn) resetBtn.addEventListener('click',function(){ chState.style='classic'; chState.color='#eef6f7'; chState.colorName='纯白'; chState.size=48; chState.sizeName='中'; renderCrosshair(); refreshPickerThumbs(); });
+  var ov=$('chOverlay'); if(ov) ov.addEventListener('mousedown',function(e){ e.stopPropagation(); });
+})();
 
 /* ================= Input ================= */
 /* Touch mode only when there is no fine pointer (mouse/trackpad): a touchscreen
@@ -5320,7 +5517,7 @@ cvs.addEventListener('click',function(){
 });
 document.addEventListener('mousemove',function(e){
   mouseX=e.clientX; mouseY=e.clientY; mouseIn=true;
-  if(S.mode!=='play'||isTouch) return;
+  if(S.mode!=='play'||S.paused||isTouch) return;
   if(pointerLocked){
     player.yaw-=e.movementX*0.0021; player.pitch-=e.movementY*0.0021;
   } else {
@@ -5334,11 +5531,16 @@ document.addEventListener('mousemove',function(e){
 });
 document.addEventListener('mouseleave',function(){ mouseIn=false; });
 document.addEventListener('mousedown',function(e){
+  if(S.paused) return;
+  if(e.target&&e.target.closest&&(e.target.closest('[data-ch-picker]')||e.target.closest('#chOverlay')||e.target.closest('#chHudBtn'))) return;
   if(S.mode==='play'&&!isTouch&&e.button===0){ firing=true; if(!pointerLocked) lockPointer(); }
 });
 document.addEventListener('mouseup',function(e){ if(e.button===0) firing=false; });
 window.addEventListener('keydown',function(e){
   keys[e.code]=true;
+  if(e.code==='KeyC'&&S.mode==='play'){ e.preventDefault(); if(S.paused) closeChPanel(); else openChPanel(); return; }
+  if(e.code==='Escape'&&S.paused){ closeChPanel(); return; }
+  if(S.paused) return;
   if(e.code==='KeyR') startReload();
   if(e.code==='Space'){ e.preventDefault(); jump(); }
   if(S.mode!=='play'&&(e.code==='Enter'||e.code==='Space')){ e.preventDefault(); startGame(); }
@@ -5394,8 +5596,9 @@ function startReload(){
 var raycaster=new THREE.Raycaster(); raycaster.far=120;
 var _v1=new THREE.Vector3(),_v2=new THREE.Vector3();
 function shoot(){
-  if(S.reloading) return;
+  if(S.reloading||S.paused) return;
   if(S.ammo<=0){ startReload(); return; }
+  var chEl=$('crosshair'); if(chEl){ chEl.classList.add('firing'); setTimeout(function(){ chEl.classList.remove('firing'); },60); }
   S.ammo--; S.fireCd=0.115; S.shake=Math.min(S.shake+0.0035,0.012);
   player.pitch+=0.0035;
   gun.position.z=-0.5; muzzleFlash.material.opacity=.95; muzzleFlash.rotation.z=Math.random()*6.28;
@@ -5458,6 +5661,7 @@ function collide(px,pz,r){
 var clock=new THREE.Clock();
 var camPos=new THREE.Vector3();
 function step(dt){
+  if(S.paused){ return; }
   S.time+=dt;
   /* --- waves --- */
   if(S.mode==='play'){
